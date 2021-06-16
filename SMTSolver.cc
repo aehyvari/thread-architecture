@@ -33,7 +33,7 @@ bool SMTSolver::learnSomeClauses() {
 
 SMTSolver::Result SMTSolver::doThings() {
     if (not learnSomeClauses()) {
-        return std::rand()/RAND_MAX < .5 ? Result::SAT : Result::UNSAT;
+        return std::rand() < RAND_MAX / 2 ? Result::SAT : Result::UNSAT;
     }
 
     {
