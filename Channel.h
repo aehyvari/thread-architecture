@@ -6,6 +6,7 @@
 
 template<typename T>
 class Channel {
+    using tp_t = std::chrono::time_point<std::chrono::system_clock>;
     std::mutex m;
     std::condition_variable cv;
     bool requestStop;
@@ -31,7 +32,7 @@ public:
     bool shallStop() const      { return isStopping; }
     void setShallStop()         { isStopping = true; }
     void clearShallStop()       { isStopping = false; }
-    void wait(std::unique_lock<std::mutex> & lock) { cv.wait(lock, [&] { return not empty() or shallStop(); }); }
+    bool waitUntil(std::unique_lock<std::mutex> & lock, const tp_t& timepoint) { return cv.wait_until(lock, timepoint, [&] { return not empty() or shallStop(); }); }
 };
 
 

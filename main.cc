@@ -39,6 +39,10 @@ int main(int argc, char** argv) {
 
     bool solved = false;
 
+    auto minSleep = std::chrono::seconds(4);
+
+    std::chrono::time_point wakeupAt(std::chrono::system_clock::now() + minSleep);
+
     while (not solved) {
         std::thread t(runSMTSolver, std::ref(solver));
 
@@ -46,15 +50,17 @@ int main(int argc, char** argv) {
 
         while (true) {
             std::unique_lock<std::mutex> lk(channel.getMutex());
-            if (count == 25) {
+
+            // Wait for a notification from the solver or the timeout.
+            // After waitUntil we own the lock
+            if (!channel.waitUntil(lk, wakeupAt)) {
+                // timeout
+                std::cout << "Timeout" << std::endl;
                 channel.setShouldStop();
+                wakeupAt = std::chrono::system_clock::now() + minSleep;
                 break;
             }
 
-            // Wait for a reaction from the solver
-            channel.wait(lk);
-
-            // We own the lock
             if (not channel.empty()) {
                 std::cout << "[t1] copying shared clauses " << count++ << std::endl;
                 std::for_each(channel.cbegin(), channel.cend(), [&](char c) { assert(c == 1); });
